@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Simulador Dragon Stack para evaluar costos frente a un presupuesto." />
+    <title>Dragon Stack | Simulador de presupuesto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        background:
+          radial-gradient(ellipse at 12% 0%, rgba(234, 88, 12, 0.18), transparent 42rem),
+          #090d16;
+      }
+
+      input[type="number"] {
+        appearance: textfield;
+      }
+
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+        margin: 0;
+        appearance: none;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-slate-100 antialiased">
+    <main class="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8 lg:py-12">
+      <header class="mb-10 flex flex-wrap items-center justify-between gap-4">
+        <a class="flex items-center gap-3" href="#" aria-label="Dragon Stack, inicio">
+          <span class="grid size-11 place-items-center rounded-xl bg-orange-500/15 text-2xl" aria-hidden="true">🐉</span>
+          <span>
+            <span class="block text-sm font-bold tracking-[0.18em] text-orange-300">DRAGON STACK</span>
+            <span class="block text-xs text-slate-400">Simulador de decisiones</span>
+          </span>
+        </a>
+        <span class="rounded-full border border-slate-700 bg-slate-900/70 px-3 py-1.5 text-xs font-medium text-slate-300">
+          Prototipo · Semana 10
+        </span>
+      </header>
+
+      <section class="mb-8 max-w-3xl">
+        <p class="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-orange-300">Claridad antes de decidir</p>
+        <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">¿Tu presupuesto alcanza?</h1>
+        <p class="mt-4 text-base leading-7 text-slate-400 sm:text-lg">
+          Compara el dinero disponible con el costo estimado. Ajusta los valores y observa cómo cambia la decisión y su representación JSON en tiempo real.
+        </p>
+      </section>
+
+      <section class="grid flex-1 gap-6 lg:grid-cols-[1fr_0.92fr]" aria-label="Simulador Dragon Stack">
+        <form id="simulator" class="rounded-2xl border border-slate-800 bg-slate-900/75 p-5 shadow-2xl shadow-black/20 sm:p-7" novalidate>
+          <div class="mb-6">
+            <h2 class="text-xl font-semibold">Configura tu escenario</h2>
+            <p class="mt-1 text-sm text-slate-400">Los importes se expresan en pesos mexicanos (MXN).</p>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-200">Presupuesto disponible</span>
+              <span class="flex overflow-hidden rounded-xl border border-slate-700 bg-slate-950 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-400/20">
+                <span class="grid place-items-center border-r border-slate-700 px-3 text-sm text-slate-400" aria-hidden="true">$</span>
+                <input id="budget" name="budget" type="number" min="0" step="0.01" value="15000" inputmode="decimal" required
+                  class="w-full bg-transparent px-3 py-3 text-slate-100 outline-none" aria-describedby="budget-help" />
+              </span>
+              <span id="budget-help" class="mt-2 block text-xs text-slate-500">La cantidad máxima que puedes destinar.</span>
+            </label>
+
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-200">Costo estimado</span>
+              <span class="flex overflow-hidden rounded-xl border border-slate-700 bg-slate-950 focus-within:border-orange-400 focus-within:ring-2 focus-within:ring-orange-400/20">
+                <span class="grid place-items-center border-r border-slate-700 px-3 text-sm text-slate-400" aria-hidden="true">$</span>
+                <input id="cost" name="cost" type="number" min="0" step="0.01" value="12000" inputmode="decimal" required
+                  class="w-full bg-transparent px-3 py-3 text-slate-100 outline-none" aria-describedby="cost-help" />
+              </span>
+              <span id="cost-help" class="mt-2 block text-xs text-slate-500">El costo total previsto para la decisión.</span>
+            </label>
+          </div>
+
+          <label class="mt-6 block">
+            <span class="mb-2 flex items-center justify-between gap-3 text-sm font-medium text-slate-200">
+              <span>Descripción del escenario</span>
+              <span class="text-xs font-normal text-slate-500">Máximo 500 caracteres</span>
+            </span>
+            <textarea id="scenario" name="scenario" rows="4" maxlength="500"
+              placeholder="Describe qué quieres financiar o comprar…"
+              class="w-full resize-y rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm leading-6 text-slate-100 outline-none placeholder:text-slate-600 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
+              aria-describedby="scenario-help"></textarea>
+            <span id="scenario-help" class="mt-2 block text-xs leading-5 text-slate-500">
+              El visor y la vista previa usan texto sanitizado; las etiquetas HTML y los bloques script se eliminan.
+            </span>
+          </label>
+
+          <div id="result-card" class="mt-6 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] p-4" aria-live="polite">
+            <div class="flex items-start gap-3">
+              <span id="result-icon" class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-400/15 text-emerald-300" aria-hidden="true">✓</span>
+              <div>
+                <p id="result-title" class="font-semibold text-emerald-200">El presupuesto alcanza</p>
+                <p id="result-message" class="mt-1 text-sm leading-6 text-slate-300">Quedan $3,000.00 MXN después de cubrir el costo estimado.</p>
+              </div>
+            </div>
+          </div>
+          <p id="validation-message" class="mt-3 hidden text-sm text-rose-300" role="alert"></p>
+        </form>
+
+        <aside class="flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-[#0c121e] shadow-2xl shadow-black/20" aria-labelledby="json-heading">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4 sm:px-6">
+            <div>
+              <h2 id="json-heading" class="font-semibold">Vista JSON</h2>
+              <p class="mt-1 text-xs text-slate-500">Se actualiza con cada cambio</p>
+            </div>
+            <span class="rounded-md border border-slate-700 px-2 py-1 font-mono text-[11px] text-slate-400">application/json</span>
+          </div>
+          <pre class="min-h-64 flex-1 overflow-auto p-5 text-xs leading-6 text-cyan-100 sm:p-6"><code id="json-output" aria-live="polite"></code></pre>
+          <div class="border-t border-slate-800 px-5 py-4 sm:px-6">
+            <p class="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">Texto sanitizado</p>
+            <p id="sanitized-preview" class="min-h-6 break-words text-sm text-slate-300">Sin descripción todavía.</p>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="mt-8 border-t border-slate-800 pt-5 text-xs leading-5 text-slate-500">
+        Este prototipo es una ayuda para comparar importes, no una recomendación financiera. No guarda ni envía los datos.
+      </footer>
+    </main>
+
+    <script>
+      const budgetInput = document.getElementById("budget");
+      const costInput = document.getElementById("cost");
+      const scenarioInput = document.getElementById("scenario");
+      const jsonOutput = document.getElementById("json-output");
+      const preview = document.getElementById("sanitized-preview");
+      const resultCard = document.getElementById("result-card");
+      const resultIcon = document.getElementById("result-icon");
+      const resultTitle = document.getElementById("result-title");
+      const resultMessage = document.getElementById("result-message");
+      const validationMessage = document.getElementById("validation-message");
+      const currency = new Intl.NumberFormat("es-MX", {
+        style: "currency",
+        currency: "MXN",
+        minimumFractionDigits: 2
+      });
+
+      function sanitizeText(value) {
+        return value
+          .replace(/<\s*script\b[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, " ")
+          .replace(/<\s*script\b[^>]*\/?\s*>/gi, " ")
+          .replace(/<[^>]*>/g, " ")
+          .replace(/[\u0000-\u001F\u007F]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 500);
+      }
+
+      function updateSimulator() {
+        const budget = budgetInput.valueAsNumber;
+        const cost = costInput.valueAsNumber;
+        const safeDescription = sanitizeText(scenarioInput.value);
+        const validBudget = Number.isFinite(budget) && budget >= 0;
+        const validCost = Number.isFinite(cost) && cost >= 0;
+        const hasValidAmounts = validBudget && validCost;
+        const remaining = hasValidAmounts ? budget - cost : null;
+        const fitsBudget = hasValidAmounts && remaining >= 0;
+
+        validationMessage.classList.toggle("hidden", hasValidAmounts);
+        if (!hasValidAmounts) {
+          validationMessage.textContent = "Ingresa cantidades válidas mayores o iguales a cero en ambos campos.";
+          resultCard.className = "mt-6 rounded-xl border border-rose-500/25 bg-rose-500/[0.07] p-4";
+          resultIcon.className = "mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-rose-400/15 text-rose-300";
+          resultIcon.textContent = "!";
+          resultTitle.className = "font-semibold text-rose-200";
+          resultTitle.textContent = "Revisa los importes";
+          resultMessage.textContent = "Se necesitan un presupuesto y un costo válidos para evaluar el escenario.";
+        } else {
+          resultCard.className = fitsBudget
+            ? "mt-6 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] p-4"
+            : "mt-6 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] p-4";
+          resultIcon.className = fitsBudget
+            ? "mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-400/15 text-emerald-300"
+            : "mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-amber-400/15 text-amber-300";
+          resultIcon.textContent = fitsBudget ? "✓" : "!";
+          resultTitle.className = fitsBudget ? "font-semibold text-emerald-200" : "font-semibold text-amber-200";
+          resultTitle.textContent = fitsBudget ? "El presupuesto alcanza" : "El costo supera el presupuesto";
+          resultMessage.textContent = fitsBudget
+            ? `Quedan ${currency.format(remaining)} después de cubrir el costo estimado.`
+            : `Faltan ${currency.format(Math.abs(remaining))} para cubrir el costo estimado.`;
+        }
+
+        const data = {
+          simulator: "Dragon Stack",
+          version: 1,
+          currency: "MXN",
+          budget: validBudget ? budget : null,
+          estimatedCost: validCost ? cost : null,
+          remaining: remaining,
+          feasible: hasValidAmounts ? fitsBudget : null,
+          status: !hasValidAmounts ? "invalid_input" : fitsBudget ? "within_budget" : "over_budget",
+          description: safeDescription
+        };
+        jsonOutput.textContent = JSON.stringify(data, null, 2);
+        preview.textContent = safeDescription || "Sin descripción todavía.";
+      }
+
+      document.getElementById("simulator").addEventListener("input", updateSimulator);
+      updateSimulator();
+    </script>
+  </body>
+</html>
